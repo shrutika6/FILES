@@ -3,7 +3,6 @@
 
 package cant ;
 
-
 import uvm_pkg::*;
 
 `include "cant_defs.svh"
@@ -992,7 +991,7 @@ fork
  forever begin
   if0.mHREADY <= 1;
   @(posedge(if0.HCLK));
-  if(if0.mHREADY==1 && if0.mHTRANS[1]==1) begin
+  if(if0.mHREADY==1 && if0.mHTRANS[1]==1 && if0.mHGRANT) begin
     if( if0.mHWRITE == 0) begin
         //if0.mHRDATA <= #1 mem[if0.mHADDR];
 //        `uvm_error("debug",$sformatf("%08x <= [%08x]",mem[if0.mHADDR],if0.mHADDR))
@@ -1000,7 +999,7 @@ fork
 //        `uvm_error("debug",$sformatf("mwr %h",if0.mHWRITE))
         if0.mHRDATA <= #1 32'h4311;
         #1 wnext=1;
-        //waddr = if0.mHADDR;
+        waddr = if0.mHADDR;
     end
   end
  end
@@ -1073,10 +1072,10 @@ virtual AHBIF if0; // handles the interface items
       sreq = new("bmreq",this);
       sdone = new("bmdone",this);
       sresp = new("bmresp",this);
-      for(aix=0; aix < 1024; aix=aix+4) begin
-        mem[32'h123450+aix]=aix+((aix+1)<<8)+((aix+2)<<16)+((aix+3)<<24);
+      //for(aix=0; aix < 1024; aix=aix+4) begin
+        //mem[32'h123450+aix]=aix+((aix+1)<<8)+((aix+2)<<16)+((aix+3)<<24);
 //        `uvm_info("mem",$sformatf("mem[%h]=%h",32'h123450+aix,mem[32'h123450+aix]),UVM_LOW)
-      end
+     // end
       
     end
   endfunction : build_phase
@@ -1380,7 +1379,7 @@ class agent1 extends uvm_agent ;
      super.build_phase(phase);
       ahbmemslave = ahbs::type_id::create("ahbmemslave",this);
       dmon = datamon::type_id::create("dmon",this);
-      //bm = bm_mon::type_id::create("bm_mon",this);
+     //bm = bm_mon::type_id::create("bm_mon",this);
      // bma = bmarbitrator::type_id::create("bmarb",this);
       expf = expframe::type_id::create("expf",this);
       cframe = chkframe::type_id::create("cframe",this);
@@ -1400,15 +1399,15 @@ class agent1 extends uvm_agent ;
       pf.startbit.connect(cframe.startbit);
       d1.set_mem.connect(smon.set_mem);
       d1.expstart.connect(imon.expstart.analysis_export);
-      //d1.sreq.connect(bma.bmreq.analysis_export);
+    //  d1.sreq.connect(bma.bmreq.analysis_export);
       dmon.dbit.connect(pf.dbit.analysis_export);
       dmon.dbit.connect(btime.dbit.analysis_export);
       
-     // bm.sreq.connect(bma.bmreq.analysis_export);
-     // bm.sdone.connect(bma.bmdone.analysis_export);
-    // d1.sdone.connect(bma.bmdone.analysis_export);
-    // bma.bmresp.connect(d1.sresp.analysis_export);
-    //  bma.bmresp.connect(bm.sresp.analysis_export);
+   //  bm.sreq.connect(bma.bmreq.analysis_export);
+    //  bm.sdone.connect(bma.bmdone.analysis_export);
+     //d1.sdone.connect(bma.bmdone.analysis_export);
+     //bma.bmresp.connect(d1.sresp.analysis_export);
+      //bma.bmresp.connect(bm.sresp.analysis_export);
       cframe.drivedin.connect(dmon.drivedin);
       imon.regvals.connect(expf.regvals);
       imon.regvals.connect(pf.regvals);
@@ -1534,7 +1533,7 @@ class seq1 extends uvm_sequence #(Si) ;
     begin
 	 
       //add
-      repeat(3) begin
+      repeat(1) begin
         start_item(si);
         finish_item(si);
       end
@@ -1544,7 +1543,7 @@ class seq1 extends uvm_sequence #(Si) ;
         si.action=Si::InitializeDDR;
         finish_item(si);
         
-        repeat(3) begin
+        repeat(1) begin
         start_item(si);
         finish_item(si);
         end 
@@ -1554,7 +1553,7 @@ class seq1 extends uvm_sequence #(Si) ;
         si.action=Si::WriteToDDR3;
         finish_item(si);
         
-        repeat(3) begin
+        repeat(1) begin
         start_item(si);
         finish_item(si);
         end
@@ -1583,7 +1582,7 @@ class seq1 extends uvm_sequence #(Si) ;
       datalen < 9; datalen>0; format==0;
       frameType==cantidef::XMITdataframe; id==29'h1000000;};
   finish_item(r);
-  repeat(5) begin
+  repeat(1) begin
     start_item(r);
     r.do_reset=0;
     r.randomize() with { quantaDiv==4; propQuanta==3;
@@ -1593,7 +1592,7 @@ class seq1 extends uvm_sequence #(Si) ;
       r.frameType=cantidef::XMITdataframe;
     finish_item(r);
   end
-  repeat(5) begin
+  repeat(1) begin
     start_item(r);
     r.do_reset=0;
     r.randomize() with { quantaDiv>0 && quantaDiv<6;
@@ -1604,7 +1603,7 @@ class seq1 extends uvm_sequence #(Si) ;
       r.frameType=cantidef::XMITremoteframe;
     finish_item(r);
   end
-  repeat(5) begin
+  repeat(1) begin
     start_item(r);
     r.do_reset=0;
     r.randomize() with { quantaDiv==4; propQuanta==3;
@@ -1614,7 +1613,7 @@ class seq1 extends uvm_sequence #(Si) ;
       r.frameType=cantidef::XMITdataframe;
     finish_item(r);
   end
-  repeat(5) begin
+  repeat(1) begin
     start_item(r);
     r.do_reset=0;
     r.randomize() with { quantaDiv>0 && quantaDiv<6;
@@ -1670,7 +1669,7 @@ class t1 extends uvm_test ;
 
    env1 e1 ;
    seq1 s1 ;
-   //bm_mon bm;
+   bm_mon bm;
 
    function new(string name="t1",uvm_component par=null);
      super.new(name,par);
